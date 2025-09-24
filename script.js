@@ -1,43 +1,33 @@
-// Récupérer le path
-let path = window.location.pathname;
+document.getElementById("playBtn").addEventListener("click", () => {
+    const url = document.getElementById("m3u8Input").value.trim();
+    if (!url) return alert("Veuillez coller un lien .m3u8");
 
-// Cas où URL commence par /index.html/https://...
-if (path.includes("index.html/")) {
-    path = path.split("index.html/")[1];
-} else {
-    path = path.substring(1); // retirer le premier "/"
-}
+    // Créer le lecteur
+    document.body.innerHTML = `
+        <div class="video-container">
+            <video id="video" controls autoplay></video>
+            <button class="fullscreen-btn" onclick="toggleFull()">⛶ Plein écran</button>
+        </div>
+    `;
 
-// Vérifier que c'est un lien http(s)
-if (path && path.startsWith("http")) {
-    const streamUrl = decodeURIComponent(path);
-    
-    if (streamUrl.includes(".m3u8")) {
-        // Remplacer le body par le lecteur
-        document.body.innerHTML = `
-            <div class="video-container">
-                <video id="video" controls autoplay></video>
-                <button class="fullscreen-btn" onclick="toggleFull()">⛶ Plein écran</button>
-            </div>
-        `;
-        
-        const video = document.getElementById("video");
-        
-        // HLS.js
+    const video = document.getElementById("video");
+
+    if (url.includes(".m3u8")) {
         if (Hls.isSupported()) {
             const hls = new Hls();
-            hls.loadSource(streamUrl);
+            hls.loadSource(url);
             hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                video.play().catch(e => console.error(e));
-            });
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => console.error(e)));
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = streamUrl;
+            video.src = url;
+        } else {
+            alert("Votre navigateur ne supporte pas ce format de stream");
         }
+    } else {
+        video.src = url;
     }
-}
+});
 
-// Fonction fullscreen
 function toggleFull() {
     const video = document.getElementById("video");
     if (!document.fullscreenElement) {
